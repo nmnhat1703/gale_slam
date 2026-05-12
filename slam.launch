@@ -1,0 +1,47 @@
+<launch>
+  <arg name="rviz" default="true" />
+  <arg name="raw_lidar_rviz" default="false" />
+  <arg name="lidar_config" default="$(find hesai_ros_driver)/config/config.yaml" />
+  <arg name="imu_namespace" default="/" />
+  <arg name="imu_node_name" default="microstrain_inertial_driver" />
+  <arg name="imu_debug" default="false" />
+  <arg name="imu_params_file" default="$(find microstrain_inertial_examples)/config/cv7/cv7.yml" />
+
+  <!-- Hesai JT128: publishes /lidar_points -->
+  <node pkg="hesai_ros_driver"
+        type="hesai_ros_driver_node"
+        name="hesai_ros_driver_node"
+        output="screen">
+    <param name="config_path" value="$(arg lidar_config)" />
+  </node>
+
+  <!-- Microstrain 3DMcv7: publishes /imu/data -->
+  <include file="$(find microstrain_inertial_driver)/launch/microstrain.launch">
+    <arg name="namespace" value="$(arg imu_namespace)" />
+    <arg name="node_name" value="$(arg imu_node_name)" />
+    <arg name="debug" value="$(arg imu_debug)" />
+    <arg name="params_file" value="$(arg imu_params_file)" />
+  </include>
+
+  <!-- FAST_LIO mapping -->
+  <include file="$(find fast_lio)/launch/mapping_hesai_jt128.launch">
+    <arg name="rviz" value="$(arg rviz)" />
+  </include>
+
+  <group if="$(arg raw_lidar_rviz)">
+    <node pkg="rviz"
+          type="rviz"
+          name="raw_lidar_rviz"
+          args="-d $(find hesai_ros_driver)/rviz/rviz.rviz" />
+  </group>
+
+  <!-- FAST_LIO mapping -->
+  <include file="$(find mavros)/launch/px4.launch">
+    <arg name="fcu_url" value="udp://:14540@192.168.0.3:14550"/>
+  </include>
+
+  <!-- FAST-LIO -> MAVROS vision_pose bridge -->
+  <node pkg="fastlio_bridge" type="bridge.py"
+      name="fastlio_to_mavros_bridge" output="screen" />
+  
+</launch>

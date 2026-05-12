@@ -1,0 +1,48 @@
+<launch>
+  
+  <arg name="lidar_config" default="$(find hesai_ros_driver)/config/config.yaml" />
+  <arg name="imu_namespace" default="/" />
+  <arg name="imu_node_name" default="microstrain_inertial_driver" />
+  <arg name="imu_debug" default="false" />
+  <arg name="imu_params_file" default="$(find microstrain_inertial_examples)/config/cv7/cv7.yml" />
+
+  <!-- Hesai JT128: publishes /lidar_points -->
+  <node pkg="hesai_ros_driver"
+        type="hesai_ros_driver_node"
+        name="hesai_ros_driver_node"
+        output="screen">
+    <param name="config_path" value="$(arg lidar_config)" />
+  </node>
+
+  <!-- Microstrain 3DMcv7: publishes /imu/data -->
+  <include file="$(find microstrain_inertial_driver)/launch/microstrain.launch">
+    <arg name="namespace" value="$(arg imu_namespace)" />
+    <arg name="node_name" value="$(arg imu_node_name)" />
+    <arg name="debug" value="$(arg imu_debug)" />
+    <arg name="params_file" value="$(arg imu_params_file)" />
+  </include>
+
+  <!-- FAST_LIO mapping -->
+    <rosparam command="load" file="$(find fast_lio)/config/hesai_jt128.yaml" />
+    <param name="feature_extract_enable" type="bool" value="0"/>
+    <param name="point_filter_num" type="int" value="4"/>
+    <param name="max_iteration" type="int" value="3" />
+    <param name="filter_size_surf" type="double" value="0.5" />
+    <param name="filter_size_map" type="double" value="0.5" />
+    <param name="cube_side_length" type="double" value="1000" />
+    <param name="runtime_pos_log_enable" type="bool" value="0" />
+    <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen" />
+
+  <include file="$(find mavros)/launch/px4.launch">
+    <arg name="fcu_url" value="udp://:14540@192.168.0.3:14550"/>
+  </include>
+
+
+  
+</launch>
+
+
+
+ 
+
+

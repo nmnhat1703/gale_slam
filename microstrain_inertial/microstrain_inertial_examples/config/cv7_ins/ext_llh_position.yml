@@ -1,0 +1,21 @@
+# Contains a mock message that will be published to the CV7-INS
+header:
+  stamp: 'now'
+  frame_id: 'fake_sensor'
+status:
+  status: 0
+  service: 0
+latitude: 44.4373567456773
+longitude: -73.10625770609381
+altitude: 126.0
+position_covariance:
+- 0.78
+- 0.0
+- 0.0
+- 0.0
+- 0.78
+- 0.0
+- 0.0
+- 0.0
+- 0.78
+position_covariance_type: 1
