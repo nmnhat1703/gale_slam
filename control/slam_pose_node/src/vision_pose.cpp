@@ -125,6 +125,7 @@ void vision_pose::estimator_odom_cb(const nav_msgs::Odometry::ConstPtr& msg)
     estimatedAttitude.yaw = yaw * 180 / pi;
 
     estimatedOdomRec_flag = true;
+    vision_pose_pub.publish(estimatedPose);
 }
 
 
@@ -193,7 +194,6 @@ void vision_pose::start()
         if(estimatedOdomRec_flag == false){
             cout << "\033[K" << "\033[31m estimatedPose no receive!!! \033[0m" << endl;
 	    }else {
-		    vision_pose_pub.publish(estimatedPose);
             cout << "\033[K"  << "\033[32m vrpn ok !\033[0m" << endl;
             cout << "\033[K"  << "       estimatedPose                  vrpnPose               px4Pose" << endl;
             cout << setiosflags(ios::fixed) << setprecision(7)
