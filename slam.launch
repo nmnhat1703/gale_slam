@@ -40,8 +40,7 @@
     <arg name="fcu_url" value="udp://:14540@192.168.0.3:14550"/>
   </include>
 
-  <!-- FAST-LIO -> MAVROS vision_pose bridge -->
-  <node pkg="fastlio_bridge" type="bridge.py"
-      name="fastlio_to_mavros_bridge" output="screen" />
-  
+  <!-- FAST-LIO /Odometry  =>  /mavros/vision_pose/pose bridge -->
+  <node pkg="slam_pose_node" type="vision_pose_node" name="vision_pose_node" output="screen"/> 
+
 </launch>
