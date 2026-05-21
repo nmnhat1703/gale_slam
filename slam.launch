@@ -35,7 +35,7 @@
           args="-d $(find hesai_ros_driver)/rviz/rviz.rviz" />
   </group>
 
-  <!-- FAST_LIO mapping -->
+  <!-- PX4 connection -->
   <include file="$(find mavros)/launch/px4.launch">
     <arg name="fcu_url" value="udp://:14540@192.168.0.3:14550"/>
   </include>

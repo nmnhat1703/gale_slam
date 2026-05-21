@@ -1,30 +1,42 @@
 <launch>
 
   <arg name="lidar_config" default="$(find hesai_ros_driver)/config/config.yaml" />
-  <arg name="record_fisheye" default="true" />
+  <arg name="cam_record" default="true" />
+  <arg name="fisheye_source_type" default="csi" />
   <arg name="fisheye_device" default="/dev/video0" />
-  <arg name="fisheye_width" default="1280" />
-  <arg name="fisheye_height" default="720" />
+  <arg name="fisheye_sensor_id" default="0" />
+  <arg name="fisheye_width" default="1920" />
+  <arg name="fisheye_height" default="1080" />
   <arg name="fisheye_fps" default="30" />
-  <arg name="fisheye_output_dir" default="/home/gale/gale_ws/src/record" />
+  <arg name="fisheye_iframe_interval" default="60" />
+  <arg name="fisheye_output_dir" default="/home/gale/recordings/fisheye" />
+  <arg name="fisheye_bitrate" default="8000000" />
+  <arg name="fisheye_cpu_affinity" default="" />
 
   <arg name="imu_namespace" default="/" />
   <arg name="imu_node_name" default="microstrain_inertial_driver" />
   <arg name="imu_debug" default="false" />
   <arg name="imu_params_file" default="$(find microstrain_inertial_examples)/config/cv7/cv7.yml" />
 
-  <!-- Fisheye USB camera recorder: writes timestamped .avi files to src/record -->
-  <group if="$(arg record_fisheye)">
-    <node pkg="record"
-          type="fisheye_recorder.py"
-          name="fisheye_recorder"
-          output="screen">
-      <param name="device" value="$(arg fisheye_device)" />
-      <param name="width" value="$(arg fisheye_width)" />
-      <param name="height" value="$(arg fisheye_height)" />
-      <param name="fps" value="$(arg fisheye_fps)" />
-      <param name="output_dir" value="$(arg fisheye_output_dir)" />
-    </node>
+  <arg name="record_bag"   default="true" />
+  <arg name="bag_dir"      default="/home/gale/recordings/rosbag" />
+  <arg name="bag_prefix"   default="$(arg bag_dir)/flight" />
+
+
+  <!-- Fisheye CSI recorder: writes timestamped H.265 .mkv files to NVMe-backed storage -->
+  <group if="$(arg cam_record)">
+    <include file="$(find record)/launch/fisheye_recorder.launch">
+      <arg name="source_type" value="$(arg fisheye_source_type)" />
+      <arg name="device" value="$(arg fisheye_device)" />
+      <arg name="sensor_id" value="$(arg fisheye_sensor_id)" />
+      <arg name="width" value="$(arg fisheye_width)" />
+      <arg name="height" value="$(arg fisheye_height)" />
+      <arg name="fps" value="$(arg fisheye_fps)" />
+      <arg name="iframe_interval" value="$(arg fisheye_iframe_interval)" />
+      <arg name="output_dir" value="$(arg fisheye_output_dir)" />
+      <arg name="bitrate" value="$(arg fisheye_bitrate)" />
+      <arg name="cpu_affinity" value="$(arg fisheye_cpu_affinity)" />
+    </include>
   </group>
 
   <!-- Hesai JT128: publishes /lidar_points -->
@@ -62,4 +74,16 @@
     <arg name="fcu_url" value="udp://:14540@192.168.0.3:14550"/>
   </include>
   
+  <!-- Rosbag recorder: writes <bag_prefix>_YYYY-MM-DD-HH-mm-ss.bag, stops on Ctrl-C -->
+    <group if="$(arg record_bag)">
+      <node pkg="rosbag" type="record" name="rosbag_recorder" output="screen"
+            args="-o $(arg bag_prefix) --lz4
+                  /Odometry
+                  /imu/data
+                  /mavros/vision_pose/pose
+                  /mavros/local_position/pose
+                  /mavros/local_position/velocity_local
+                  /mavros/setpoint_raw/attitude"/>
+    </group>
+
 </launch>

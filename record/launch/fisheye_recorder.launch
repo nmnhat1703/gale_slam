@@ -1,0 +1,39 @@
+<launch>
+  <arg name="source_type" default="csi" />
+  <arg name="device" default="/dev/video0" />
+  <arg name="sensor_id" default="0" />
+  <arg name="output_dir" default="/home/gale/recordings/fisheye" />
+  <arg name="output_mount" default="/" />
+  <arg name="width" default="1920" />
+  <arg name="height" default="1080" />
+  <arg name="fps" default="30" />
+  <arg name="input_format" default="UYVY" />
+  <arg name="flip_method" default="2" />
+  <arg name="bitrate" default="8000000" />
+  <arg name="iframe_interval" default="60" />
+  <arg name="cpu_affinity" default="" />
+
+  <node pkg="record" type="fisheye_recorder.py" name="fisheye_recorder" output="screen">
+    <param name="source_type" value="$(arg source_type)" />
+    <param name="device" value="$(arg device)" />
+    <param name="sensor_id" value="$(arg sensor_id)" />
+    <param name="output_dir" value="$(arg output_dir)" />
+    <param name="output_mount" value="$(arg output_mount)" />
+    <param name="require_output_mount" value="true" />
+    <param name="require_nvme_device" value="true" />
+    <param name="width" value="$(arg width)" />
+    <param name="height" value="$(arg height)" />
+    <param name="fps" value="$(arg fps)" />
+    <param name="input_format" value="$(arg input_format)" />
+    <param name="flip_method" value="$(arg flip_method)" />
+    <param name="bitrate" value="$(arg bitrate)" />
+    <param name="control_rate" value="1" />
+    <param name="preset_level" value="1" />
+    <param name="iframe_interval" value="$(arg iframe_interval)" />
+    <param name="nice" value="5" />
+    <param name="ionice" value="true" />
+    <param name="ionice_class" value="2" />
+    <param name="ionice_level" value="7" />
+    <param name="cpu_affinity" value="$(arg cpu_affinity)" />
+  </node>
+</launch>
