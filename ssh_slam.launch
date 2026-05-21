@@ -5,10 +5,10 @@
   <arg name="fisheye_source_type" default="csi" />
   <arg name="fisheye_device" default="/dev/video0" />
   <arg name="fisheye_sensor_id" default="0" />
-  <arg name="fisheye_width" default="1920" />
-  <arg name="fisheye_height" default="1080" />
+  <arg name="fisheye_width" default="1280" />
+  <arg name="fisheye_height" default="720" />
   <arg name="fisheye_fps" default="30" />
-  <arg name="fisheye_iframe_interval" default="60" />
+  <arg name="fisheye_iframe_interval" default="30" />
   <arg name="fisheye_output_dir" default="/home/gale/recordings/fisheye" />
   <arg name="fisheye_bitrate" default="8000000" />
   <arg name="fisheye_cpu_affinity" default="" />
@@ -18,7 +18,7 @@
   <arg name="imu_debug" default="false" />
   <arg name="imu_params_file" default="$(find microstrain_inertial_examples)/config/cv7/cv7.yml" />
 
-  <arg name="record_bag"   default="true" />
+  <arg name="bag_record"   default="true" />
   <arg name="bag_dir"      default="/home/gale/recordings/rosbag" />
   <arg name="bag_prefix"   default="$(arg bag_dir)/flight" />
 
@@ -75,7 +75,7 @@
   </include>
   
   <!-- Rosbag recorder: writes <bag_prefix>_YYYY-MM-DD-HH-mm-ss.bag, stops on Ctrl-C -->
-    <group if="$(arg record_bag)">
+    <group if="$(arg bag_record)">
       <node pkg="rosbag" type="record" name="rosbag_recorder" output="screen"
             args="-o $(arg bag_prefix) --lz4
                   /Odometry
