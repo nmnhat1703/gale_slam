@@ -1,6 +1,3 @@
-Good — let's design this properly. Ignoring the time frame means we can do it right rather than rush, which is better for the paper anyway. I'll lay this out as I would for myself if I were doing it.
-Before writing the plan I want to be explicit about one thing: this is not a "follow these steps" recipe. There are several decisions where I'll mark "DECIDE LATER" because the right answer depends on what you discover at earlier stages. Don't skip those.
-
 Detailed plan: LiDAR-Observability-Aware NMPC for Confined-Space Slow Flight
 Phase 0 — Foundations and decisions you need to commit to first
 Before writing any code, lock these down. Each shapes everything that follows.
@@ -26,6 +23,8 @@ This is the conceptual heart of the contribution and it's where most of your nov
 (ii) Registration information matrix: from FAST-LIO's iEKF, the actual information matrix of the LiDAR factor. This is the right thing mathematically but requires modifying FAST-LIO to expose it. More work, more correct.
 (iii) Predicted observability at future poses: this is what perception-aware NMPC needs in its cost — not "observability now" but "observability if I move to position $x_k$ in $k$ steps." You build a local observability field and look it up at each NMPC stage.
 My recommendation: start with (i) as the field source — i.e., use the current scan to estimate a local observability field over a coarse voxel grid around the robot, and look up that field over the NMPC horizon. If reviewers push back on rigor, you have a path to (ii). Don't promise (ii) in the abstract.
+
+
 0.5 Test environment
 What can you build? The whole paper depends on having a physically observable degenerate scenario. Options:
     • Cardboard corridor: two parallel cardboard or foam-board walls, ~4 m long, ~1 m wide. Cheap, easy, probably enough. 
@@ -231,3 +230,92 @@ Once I have those I can:
     • Write the experimental flight protocol document 
 What I'd want not to do: write all the code without you having confirmed the architecture. There are too many places where the wrong default choice would cascade into a lot of useless code.
 What's your call on the four open questions?
+
+------------------------------------------------------------------
+1) Install Acados
+Clone and build from source:
+
+git clone https://github.com/acados/acados.git
+cd acados
+git submodule update --recursive --init
+mkdir -p build
+cd build
+cmake -DACADOS_WITH_QPOASES=ON ..
+# add more optional arguments e.g. -DACADOS_WITH_DAQP=ON
+make install -j4
+
+echo 'export ACADOS_SOURCE_DIR=/home/nhat/acados' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ACADOS_SOURCE_DIR/lib' >> ~/.bashrc
+source ~/.bashrc
+
+python3 -m pip install -e /home/nhat/acados/interfaces/acados_template
+
+mkdir -p $ACADOS_SOURCE_DIR/bin
+
+~/acados/bin
+
+python3 - <<'PY'
+from acados_template import get_tera
+get_tera(tera_version='0.0.34', force_download=True)
+PY
+
+chmod +x ~/acados/bin/t_renderer
+
+# test acados
+cd ~/acados/examples/acados_python/getting_started
+python3 minimal_example_ocp.py
+
+------------------------------------------------------------------
+2) Install PX4-Autopilot
+
+cd ~
+
+git clone --branch v1.16.0 --recursive \
+https://github.com/PX4/PX4-Autopilot.git
+
+cd ~/PX4-Autopilot
+git describe --tags --always
+
+Expected output:
+v1.16.0
+
+git submodule sync --recursive
+git submodule update --init --recursive --force
+
+bash ./Tools/setup/ubuntu.sh --no-nuttx
+
+DONT_RUN=1 make px4_sitl_default gazebo-classic_iris
+
+nano ~/PX4-Autopilot/launch/run_px4_sitl.sh
+    #!/bin/bash
+    
+    # Stop if any command fails
+    set -e
+    
+    # PX4 Gazebo Classic paths
+    export PX4_DIR="$HOME/PX4-Autopilot"
+    
+    if [ ! -f "$PX4_DIR/Tools/simulation/gazebo-classic/setup_gazebo.bash" ]; then
+        echo "PX4 Gazebo Classic setup file not found:"
+        echo "$PX4_DIR/Tools/simulation/gazebo-classic/setup_gazebo.bash"
+        exit 1
+    fi
+    
+    if [ ! -d "$PX4_DIR/build/px4_sitl_default" ]; then
+        echo "PX4 SITL build folder not found."
+        echo "Build first with:"
+        echo "cd $PX4_DIR && DONT_RUN=1 make px4_sitl_default gazebo-classic_iris"
+        exit 1
+    fi
+    
+    source "$PX4_DIR/Tools/simulation/gazebo-classic/setup_gazebo.bash" \
+        "$PX4_DIR" "$PX4_DIR/build/px4_sitl_default"
+    
+    export ROS_PACKAGE_PATH="$ROS_PACKAGE_PATH:$PX4_DIR"
+    export ROS_PACKAGE_PATH="$ROS_PACKAGE_PATH:$PX4_DIR/Tools/simulation/gazebo-classic/sitl_gazebo-classic"
+    
+    echo "Launching PX4 SITL + Gazebo Classic + MAVROS..."
+    roslaunch px4 mavros_posix_sitl.launch
+
+chmod +x ~/PX4-Autopilot/launch/run_px4_sitl.sh
+~/PX4-Autopilot/launch/run_px4_sitl.sh
